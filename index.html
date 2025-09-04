@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    
+    <!-- Preconnect to Google Fonts servers for faster font loading -->
+    <!-- Establishes DNS, TCP, and TLS connections early, saving ~100-200ms -->
+    <!-- does not load the font immediately, but establishes the connection early. Downloads the font later when needed.--> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load Nunito font from Google Fonts -->
+    <!-- Weights: 400 (normal), 500 (medium), 600 (semibold), 700 (bold) -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <title>Security Vulnerability Dashboard</title>
   </head>
   <body>
     <div id="root"></div>
