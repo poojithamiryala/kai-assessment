@@ -1,12 +1,7 @@
 import React from 'react';
 import Home from './pages/Home';
 import Analysis from './pages/Analysis';
-
-export interface RouteConfig {
-  path: string;
-  element: React.ComponentType;
-  title: string;
-}
+import type { RouteConfig } from './types/routes';
 
 export const routes: RouteConfig[] = [
   {
