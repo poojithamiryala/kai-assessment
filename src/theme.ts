@@ -1,5 +1,27 @@
 import { createTheme } from "@mui/material/styles";
 
+// Extending the theme to include custom colors
+declare module '@mui/material/styles' {
+  interface Palette {
+    custom: {
+      button: {
+        active: string;
+        hover: string;
+        border: string;
+      };
+    };
+  }
+  interface PaletteOptions {
+    custom?: {
+      button: {
+        active: string;
+        hover: string;
+        border: string;
+      };
+    };
+  }
+}
+
 export const theme = createTheme({
   palette: {
     primary: {
@@ -21,6 +43,14 @@ export const theme = createTheme({
     },
     success: {
       main: "#7BAE7F",
+    },
+    // Custom colors for buttons and overlays
+    custom: {
+      button: {
+        active: "rgba(255, 255, 255, 0.2)",
+        hover: "rgba(255, 255, 255, 0.15)",
+        border: "rgba(255, 255, 255, 0.3)",
+      },
     },
   },
   typography: {

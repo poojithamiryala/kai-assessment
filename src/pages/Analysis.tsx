@@ -1,11 +1,14 @@
 import React from 'react';
+import { Typography } from '@mui/material';
+import Layout from '../components/Layout';
 
 const Analysis: React.FC = () => {
   return (
-    <div>
-      <h1>Vulnerability Analysis</h1>
-      <p>Analysis view here...</p>
-    </div>
+    <Layout>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Vulnerability Analysis
+        </Typography>
+    </Layout>
   );
 };
 
