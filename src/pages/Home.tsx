@@ -203,27 +203,27 @@ const Home: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                  <CardContent>
-                    <Typography variant="h4" color="success.main" gutterBottom>
-                      {data.metrics.groupCount}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Groups
-                    </Typography>
-                  </CardContent>
-                </Card>
+                                 <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
+                   <CardContent>
+                     <Typography variant="h4" color="success.main" gutterBottom>
+                       {filteredMetrics?.groupCount || data.metrics.groupCount}
+                     </Typography>
+                     <Typography variant="body2" color="text.secondary">
+                       Groups
+                     </Typography>
+                   </CardContent>
+                 </Card>
 
-                <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                  <CardContent>
-                    <Typography variant="h4" color="info.main" gutterBottom>
-                      {data.metrics.repoCount}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Repositories
-                    </Typography>
-                  </CardContent>
-                </Card>
+                 <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
+                   <CardContent>
+                     <Typography variant="h4" color="info.main" gutterBottom>
+                       {filteredMetrics?.repoCount || data.metrics.repoCount}
+                     </Typography>
+                     <Typography variant="body2" color="text.secondary">
+                       Repositories
+                     </Typography>
+                   </CardContent>
+                 </Card>
               </Box>
             </Box>
 
@@ -273,8 +273,8 @@ const Home: React.FC = () => {
                   </Typography>
                   <Typography variant="body1" sx={{ mb: 2 }}>
                     {activeFilter === 'analysis'
-                      ? 'Showing vulnerabilities that are NOT marked as "invalid - norisk" (excluding manually analyzed non-risky items)'
-                      : 'Showing vulnerabilities that are NOT marked as "ai-invalid-norisk" (excluding AI-analyzed non-risky items)'
+                      ? 'Showing vulnerabilities that are marked as "invalid - norisk"'
+                      : 'Showing vulnerabilities that are marked as "ai-invalid-norisk"'
                     }
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
