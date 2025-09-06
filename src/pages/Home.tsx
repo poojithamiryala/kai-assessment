@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import SeverityChart from '../components/SeverityChart';
+import KaiStatusChart from '../components/KaiStatusChart';
 import { useVulnerabilityData } from '../hooks/useVulnerabilityData';
 
 const Home: React.FC = () => {
@@ -314,26 +315,22 @@ const Home: React.FC = () => {
 
             {/* Severity Distribution Chart */}
             <Box sx={{ mb: 4 }}>
-              <SeverityChart 
-                metrics={filteredMetrics || data.metrics} 
-                title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Severity` : "Severity Distribution"}
-              />
-            </Box>
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
+                gap: 3 
+              }}>
+                {/* Severity Distribution Chart - Left */}
+                <SeverityChart 
+                  metrics={filteredMetrics || data.metrics} 
+                  title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Severity` : "Severity Distribution"}
+                />
 
-            {/* Kai Status Distribution */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-                Kai Status Distribution
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {Object.entries(filteredMetrics?.kaiStatusDistribution || {}).map(([status, count]) => (
-                  <Chip
-                    key={status}
-                    label={`${status}: ${(count as number).toLocaleString()}`}
-                    color={status.includes('invalid') ? 'success' : 'default'}
-                    variant="outlined"
-                  />
-                ))}
+                {/* Kai Status Distribution Chart - Right */}
+                <KaiStatusChart 
+                  kaiStatusDistribution={filteredMetrics?.kaiStatusDistribution || data.metrics.kaiStatusDistribution}
+                  title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Kai Status` : "Kai Status Distribution"}
+                />
               </Box>
             </Box>
 
