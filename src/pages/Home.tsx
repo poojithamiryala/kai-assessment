@@ -18,6 +18,7 @@ import {
   FilterList,
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
+import SeverityChart from '../components/SeverityChart';
 import { useVulnerabilityData } from '../hooks/useVulnerabilityData';
 
 const Home: React.FC = () => {
@@ -93,7 +94,7 @@ const Home: React.FC = () => {
                     fontWeight: 600,
                     fontSize: '1rem',
                     textTransform: 'none',
-                    boxShadow: activeFilter === 'analysis' 
+                    boxShadow: activeFilter === 'analysis'
                       ? theme.palette.custom.shadows.analysis.active
                       : theme.palette.custom.shadows.button.default,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -127,7 +128,7 @@ const Home: React.FC = () => {
                     fontWeight: 600,
                     fontSize: '1rem',
                     textTransform: 'none',
-                    boxShadow: activeFilter === 'ai-analysis' 
+                    boxShadow: activeFilter === 'ai-analysis'
                       ? theme.palette.custom.shadows.aiAnalysis.active
                       : theme.palette.custom.shadows.button.default,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -180,68 +181,143 @@ const Home: React.FC = () => {
                 Data Overview {activeFilter !== 'none' && `(${activeFilter.replace('-', ' ')} filtered)`}
               </Typography>
 
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                  <CardContent>
-                    <Typography variant="h4" color="primary" gutterBottom>
-                      {filteredMetrics?.totalVulnerabilities.toLocaleString() || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Vulnerabilities
-                    </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 3 }}>
+                {/* Total Vulnerabilities */}
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 100,
+                    height: 100,
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '50%',
+                  }
+                }}>
+                  <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                          {filteredMetrics?.totalVulnerabilities.toLocaleString() || 0}
+                        </Typography>
+                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                          Total Vulnerabilities
+                        </Typography>
+                      </Box>
+
+                    </Box>
                   </CardContent>
                 </Card>
 
-                <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                  <CardContent>
-                    <Typography variant="h4" color="error" gutterBottom>
-                      {(filteredMetrics?.severityDistribution.critical || 0) + (filteredMetrics?.severityDistribution.high || 0)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      High Risk
-                    </Typography>
+                {/* High Risk Vulnerabilities */}
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  color: 'white',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 100,
+                    height: 100,
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '50%',
+                  }
+                }}>
+                  <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                          {(filteredMetrics?.severityDistribution.critical || 0) + (filteredMetrics?.severityDistribution.high || 0)}
+                        </Typography>
+                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                          High Risk Vulnerabilities
+                        </Typography>
+                      </Box>
+
+                    </Box>
+
                   </CardContent>
                 </Card>
 
-                                 <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                   <CardContent>
-                     <Typography variant="h4" color="success.main" gutterBottom>
-                       {filteredMetrics?.groupCount || data.metrics.groupCount}
-                     </Typography>
-                     <Typography variant="body2" color="text.secondary">
-                       Groups
-                     </Typography>
-                   </CardContent>
-                 </Card>
+                {/* Groups */}
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  color: 'white',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 100,
+                    height: 100,
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '50%',
+                  }
+                }}>
+                  <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                          {filteredMetrics?.groupCount || data.metrics.groupCount}
+                        </Typography>
+                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                          Security Groups
+                        </Typography>
+                      </Box>
 
-                 <Card sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                   <CardContent>
-                     <Typography variant="h4" color="info.main" gutterBottom>
-                       {filteredMetrics?.repoCount || data.metrics.repoCount}
-                     </Typography>
-                     <Typography variant="body2" color="text.secondary">
-                       Repositories
-                     </Typography>
-                   </CardContent>
-                 </Card>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Repositories */}
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                  color: 'white',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 100,
+                    height: 100,
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '50%',
+                  }
+                }}>
+                  <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                          {filteredMetrics?.repoCount || data.metrics.repoCount}
+                        </Typography>
+                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                          Repositories
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
               </Box>
             </Box>
 
-            {/* Severity Distribution */}
+            {/* Severity Distribution Chart */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-                Severity Distribution
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {Object.entries(filteredMetrics?.severityDistribution || {}).map(([severity, count]) => (
-                  <Chip
-                    key={severity}
-                    label={`${severity}: ${(count as number).toLocaleString()}`}
-                    color={severity === 'critical' ? 'error' : severity === 'high' ? 'warning' : 'default'}
-                    variant="outlined"
-                  />
-                ))}
-              </Box>
+              <SeverityChart 
+                metrics={filteredMetrics || data.metrics} 
+                title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Severity` : "Severity Distribution"}
+              />
             </Box>
 
             {/* Kai Status Distribution */}
