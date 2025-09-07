@@ -10,7 +10,6 @@ import {
   useTheme,
   IconButton,
   Tooltip as MuiTooltip,
-  Slider,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -267,7 +266,7 @@ const FixTrendChart: React.FC<FixTrendChartProps> = ({
           </Typography>
           {availableSeverities.map(severity => (
             <Chip
-              key={severity}
+              key={`fix-${severity}`}
               label={severity.charAt(0).toUpperCase() + severity.slice(1)}
               size="small"
               onClick={() => handleSeriesToggle(severity)}
@@ -308,7 +307,7 @@ const FixTrendChart: React.FC<FixTrendChartProps> = ({
                 {availableSeverities.map(severity => (
                   visibleSeries[severity] && (
                     <Line
-                      key={severity}
+                      key={`fix-line-${severity}`}
                       type="monotone"
                       dataKey={severity}
                       stroke={getSeverityColor(severity)}
@@ -341,7 +340,7 @@ const FixTrendChart: React.FC<FixTrendChartProps> = ({
                 {availableSeverities.map(severity => (
                   visibleSeries[severity] && (
                     <Area
-                      key={severity}
+                      key={`fix-area-${severity}`}
                       type="monotone"
                       dataKey={severity}
                       stackId="1"

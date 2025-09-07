@@ -245,7 +245,7 @@ const RiskFactorsChart: React.FC<RiskFactorsChartProps> = memo(({
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {Object.entries(metrics.riskFactorDistribution).map(([factor, count]) => (
                 <Chip
-                  key={factor}
+                  key={`risk-factor-${factor}`}
                   label={`${factor}: ${count}`}
                   size="small"
                   variant="outlined"
