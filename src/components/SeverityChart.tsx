@@ -113,6 +113,7 @@ const SeverityChart: React.FC<SeverityChartProps> = memo(({
               <BarChart 
                 data={chartData} 
                 layout="vertical"
+                margin={{ top: 20, right: 30, left: 50, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.grey[300]} />
                 <XAxis 
@@ -129,6 +130,7 @@ const SeverityChart: React.FC<SeverityChartProps> = memo(({
                 <Tooltip content={<CustomTooltip />} />
                 <Bar 
                   dataKey="count" 
+                  label={{ position: 'right' }}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={getSeverityColor(entry.name)} />
