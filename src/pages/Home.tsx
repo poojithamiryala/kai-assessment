@@ -22,6 +22,8 @@ import SeverityChart from '../components/SeverityChart';
 import KaiStatusChart from '../components/KaiStatusChart';
 import { useVulnerabilityData } from '../hooks/useVulnerabilityData';
 import RiskFactorsChart from '../components/RiskFactorsChart';
+import DiscoveryTrendChart from '../components/DiscoveryTrendChart';
+import FixTrendChart from '../components/FixTrendChart';
 
 const Home: React.FC = () => {
   const theme = useTheme();
@@ -341,6 +343,25 @@ const Home: React.FC = () => {
                 metrics={filteredMetrics || data.metrics} 
                 title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Risk Factors` : "Risk Factors Frequency"}
               />
+            </Box>
+
+            {/* Trend Analysis Charts */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+                Vulnerability Trend Analysis {activeFilter !== 'none' && `(${activeFilter.replace('-', ' ')} filtered)`}
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {/* Discovery Trend */}
+                <DiscoveryTrendChart
+                  metrics={filteredMetrics || data.metrics}
+                />
+
+            {/* Fix Trend */}
+            <FixTrendChart
+              metrics={filteredMetrics || data.metrics}
+            />
+              </Box>
             </Box>
 
             {/* Filter Impact */}
