@@ -21,6 +21,7 @@ import Layout from '../components/Layout';
 import SeverityChart from '../components/SeverityChart';
 import KaiStatusChart from '../components/KaiStatusChart';
 import { useVulnerabilityData } from '../hooks/useVulnerabilityData';
+import RiskFactorsChart from '../components/RiskFactorsChart';
 
 const Home: React.FC = () => {
   const theme = useTheme();
@@ -332,6 +333,14 @@ const Home: React.FC = () => {
                   title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Kai Status` : "Kai Status Distribution"}
                 />
               </Box>
+            </Box>
+
+
+            <Box sx={{ mb: 4 }}>
+              <RiskFactorsChart 
+                metrics={filteredMetrics || data.metrics} 
+                title={activeFilter !== 'none' ? `${activeFilter.replace('-', ' ')} Filtered Risk Factors` : "Risk Factors Frequency"}
+              />
             </Box>
 
             {/* Filter Impact */}
