@@ -230,9 +230,6 @@ const RiskFactorsChart: React.FC<RiskFactorsChartProps> = memo(({
             <Typography variant="body2" color="text.secondary">
               Showing {chartData.length} risk factor{chartData.length > 1 ? 's' : ''}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total: {chartData.reduce((sum, item) => sum + item.count, 0).toLocaleString()} vulnerabilities
-            </Typography>
           </Box>
         )}
 
