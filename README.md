@@ -63,6 +63,9 @@ yarn dev
 ### 4. Open in Browser
 Navigate to `http://localhost:5173` to view the application.
 
+### 5. Data Source
+The application fetches vulnerability data from an external API endpoint that provides comprehensive vulnerability information including CVE details, severity levels, risk factors, and remediation status.
+
 ## 🏗️ Architecture Overview
 
 ### High-Level Architecture

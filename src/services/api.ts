@@ -11,7 +11,7 @@ export const fetchVulnerabilityDataProcessor = async (
 ): Promise<OptimizedVulnerabilityApiResponse> => {
   try {
 
-    const response = await fetch('/ui_demo.json'); // using fetch instead of axios as it is more efficient for large files as response.body is a readable stream
+    const response = await fetch('https://tvglud7oo7neghgl.public.blob.vercel-storage.com/ui_demo.json'); // External vulnerability data source
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
