@@ -50,7 +50,7 @@ export class EfficientDataProcessor {
 
   // Core optimization: build lookup tables for O(1) searching
   private buildIndexes(): void {
-    // Pre-allocate Maps for better performance
+    // Pre-allocate Maps for better performance - avoids dynamic resizing during iteration
     const searchIndex = new Map<string, Set<number>>();
     const severityIndex = new Map<string, Set<number>>();
     const packageIndex = new Map<string, Set<number>>();
@@ -59,6 +59,7 @@ export class EfficientDataProcessor {
 
     this.vulnerabilities.forEach((vuln, index) => {
       // Build comprehensive search index from multiple fields
+      // This creates a searchable text from CVE, package, repo, and description
       const searchTerms = [
         vuln.cve.toLowerCase(),
         vuln.imageName.toLowerCase(),
@@ -67,6 +68,7 @@ export class EfficientDataProcessor {
       ].join(' ');
 
       // Index each word for partial matching
+      // This allows users to search for any part of the vulnerability data
       searchTerms.split(' ').forEach(term => {
         if (term.length > 0) {
           if (!searchIndex.has(term)) {
@@ -76,7 +78,8 @@ export class EfficientDataProcessor {
         }
       });
 
-      // Build filter indexes
+      // Build filter indexes for each categorical field
+      // These enable O(1) filtering by severity, package, repo, and Kai status
       if (!severityIndex.has(vuln.severity)) {
         severityIndex.set(vuln.severity, new Set());
       }
@@ -184,6 +187,13 @@ export class EfficientDataProcessor {
   /**
    * Main search method using pre-sorted arrays and fast filtering
    * Amortized sorting cost - sort once, reuse many times
+   * 
+   * Performance Strategy:
+   * 1. Use pre-sorted arrays instead of runtime sorting (O(1) lookup)
+   * 2. Fast filter scan using pre-built indexes (O(1) per filter)
+   * 3. Pagination on filtered results (O(pageSize) slice operation)
+   * 
+   * This approach reduces search complexity from O(n log n) to O(n) for filtering
    */
   public search(
     searchTerm: string = '',
@@ -203,11 +213,13 @@ export class EfficientDataProcessor {
     const startTime = performance.now();
     
     // Get the pre-sorted array for the requested sort field and direction
+    // This is the key optimization - we pre-sorted all possible combinations
     const sortKey = `${sortField}-${sortDirection}`;
     const preSortedIds = this.preSortedIds.get(sortKey);
     
     if (!preSortedIds) {
-      // Fallback to default sorting if pre-sorted array not found
+      // Fallback to runtime sorting if pre-sorted array not found
+      // This should rarely happen as we pre-sort all common combinations
       const allIndices = this.vulnerabilities.map((_, index) => index);
       const sortedIndices = this.sortVulnerabilities(
         allIndices.map(index => this.vulnerabilities[index]), 
@@ -218,15 +230,18 @@ export class EfficientDataProcessor {
       return this.filterAndPaginate(sortedIndices, searchTerm, severityFilter, packageFilter, repoFilter, kaiStatusFilter, page, pageSize, startTime);
     }
     
-    // Fast scan: filter the pre-sorted array
+    // Fast scan: filter the pre-sorted array using O(1) index lookups
+    // This is much faster than filtering unsorted data
     const visibleIds = preSortedIds.filter(id => this.passesFilters(id, searchTerm, severityFilter, packageFilter, repoFilter, kaiStatusFilter));
     
     // Apply pagination to filtered results
+    // Only slice the visible results, not the entire dataset
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
     const paginatedIds = visibleIds.slice(startIndex, endIndex);
     
     // Convert IDs back to vulnerability objects
+    // This maintains the pre-sorted order while returning actual data
     const results = paginatedIds.map(id => this.vulnerabilities[id]);
     
     const endTime = performance.now();
