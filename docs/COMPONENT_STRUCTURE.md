@@ -87,7 +87,7 @@ const Home: React.FC = () => {
 **Component Structure**:
 ```typescript
 const Vulnerabilities: React.FC = () => {
-  const { vulnerabilities, dataProcessor, isLoading, error, refreshData, clearCache, cacheInfo } = useAsyncVulnerabilityData();
+  const { vulnerabilities, dataProcessor, isLoading, error, refreshData, cacheInfo } = useAsyncVulnerabilityData();
   const [selectedVulnerabilities, setSelectedVulnerabilities] = useState<OptimizedVulnerability[]>([]);
   const [comparatorOpen, setComparatorOpen] = useState(false);
   
@@ -453,7 +453,7 @@ export class EfficientDataProcessor {
 
 **Key Features**:
 - **Singleton Pattern**: Single instance across application
-- **Time-based Expiration**: 5-minute cache duration
+- **Time-based Expiration**: 60-minute cache duration
 - **Version Control**: Cache invalidation based on data version
 - **Memory Management**: Automatic cleanup of expired data
 
@@ -461,7 +461,7 @@ export class EfficientDataProcessor {
 ```typescript
 class VulnerabilityCache {
   private cache: CachedVulnerabilityData | null = null;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
   private readonly CACHE_VERSION = '1.0.0';
   
   private isCacheValid(): boolean {

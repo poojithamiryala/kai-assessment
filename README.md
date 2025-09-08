@@ -8,7 +8,7 @@ A high-performance React application for analyzing and visualizing vulnerability
 - **Interactive Dashboard**: Real-time vulnerability metrics and visualizations
 - **Advanced Data Processing**: Handles large datasets (300MB+) efficiently
 - **Multi-Vulnerability Comparison**: Side-by-side analysis of selected vulnerabilities
-- **Smart Caching**: Instant tab switching with intelligent data caching
+- **Smart Caching**: 60-minute data caching for instant tab switching
 
 ### Data Visualization
 - **Severity Distribution**: Bar chart showing vulnerability severity breakdown
@@ -121,9 +121,9 @@ The core performance engine that handles large datasets efficiently:
 Singleton service for intelligent data caching:
 
 - **Cache-First Strategy**: Always check cache before processing
-- **Automatic Expiration**: 5-minute cache duration
+- **Automatic Expiration**: 60-minute cache duration
 - **Memory Management**: Efficient storage and retrieval
-- **Cross-Session Persistence**: Maintains data across tab switches
+- **Cross-Session Persistence**: Maintains data across browser sessions
 
 ### useAsyncVulnerabilityData
 Custom React hook for asynchronous data management:

@@ -82,7 +82,7 @@ Processed Data → Cache Storage → Instant Retrieval
 **Caching Strategy:**
 - **Singleton Pattern**: Single cache instance across the application
 - **Cache-First Approach**: Always check cache before processing
-- **Automatic Expiration**: 5-minute cache duration
+- **Automatic Expiration**: 60-minute cache duration
 - **Memory Management**: Efficient storage and cleanup
 
 **Cache Structure:**

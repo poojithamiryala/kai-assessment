@@ -77,7 +77,6 @@ const Vulnerabilities: React.FC = () => {
     progress, 
     isStreaming,
     refreshData,
-    clearCache,
     cacheInfo
   } = useAsyncVulnerabilityData();
   
@@ -268,15 +267,6 @@ const Vulnerabilities: React.FC = () => {
                 sx={{ borderRadius: '8px' }}
               >
                 Refresh Data
-              </Button>
-              {/* Clear the cache to free up memory (useful for debugging) */}
-              <Button
-                variant="outlined"
-                onClick={clearCache}
-                sx={{ borderRadius: '8px' }}
-                color="secondary"
-              >
-                Clear Cache
               </Button>
               
               {/* Compare selected vulnerabilities */}
