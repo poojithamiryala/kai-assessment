@@ -119,7 +119,7 @@ const SeverityChart: React.FC<SeverityChartProps> = memo(({
                 <XAxis 
                   type="number"
                   tick={{ fontSize: 12, fill: theme.palette.text.primary }}
-                  tickFormatter={(value) => value.toLocaleString()}
+                  tickFormatter={(value: number) => value.toLocaleString()}
                 />
                 <YAxis 
                   type="category"
