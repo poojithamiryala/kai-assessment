@@ -9,10 +9,11 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { Download, Refresh } from '@mui/icons-material';
+import { Download, Refresh, CompareArrows } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import VulnerabilityTable from '../components/VulnerabilityTable';
 import VulnerabilityDetail from '../components/VulnerabilityDetail';
+import VulnerabilityComparator from '../components/VulnerabilityComparator';
 import { useAsyncVulnerabilityData } from '../hooks/useAsyncVulnerabilityData';
 import type { OptimizedVulnerability } from '../types/vulnerability';
 
@@ -83,6 +84,10 @@ const Vulnerabilities: React.FC = () => {
   // State for showing detailed vulnerability information in a popup modal
   const [selectedVulnerability, setSelectedVulnerability] = useState<OptimizedVulnerability | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  
+  // State for vulnerability comparator
+  const [selectedVulnerabilities, setSelectedVulnerabilities] = useState<OptimizedVulnerability[]>([]);
+  const [comparatorOpen, setComparatorOpen] = useState(false);
 
   // When a user clicks on a vulnerability row, show the detailed information
   const handleRowClick = (vulnerability: OptimizedVulnerability) => {
@@ -94,6 +99,24 @@ const Vulnerabilities: React.FC = () => {
   const handleCloseModal = () => {
     setDetailModalOpen(false);
     setSelectedVulnerability(null);
+  };
+
+  // Handle selection changes from the table
+  const handleSelectionChange = (selectedIds: string[]) => {
+    const selectedVulns = vulnerabilities.filter(vuln => selectedIds.includes(vuln.id));
+    setSelectedVulnerabilities(selectedVulns);
+  };
+
+  // Open comparator with selected vulnerabilities
+  const handleOpenComparator = () => {
+    if (selectedVulnerabilities.length >= 2) {
+      setComparatorOpen(true);
+    }
+  };
+
+  // Close comparator
+  const handleCloseComparator = () => {
+    setComparatorOpen(false);
   };
 
   // Show a nice loading screen while we're getting the data
@@ -256,6 +279,18 @@ const Vulnerabilities: React.FC = () => {
                 Clear Cache
               </Button>
               
+              {/* Compare selected vulnerabilities */}
+              <Button
+                variant="contained"
+                startIcon={<CompareArrows />}
+                onClick={handleOpenComparator}
+                disabled={selectedVulnerabilities.length < 2}
+                sx={{ borderRadius: '8px' }}
+                color="primary"
+              >
+                Compare ({selectedVulnerabilities.length})
+              </Button>
+              
               {/* Cache Status */}
               {cacheInfo.hasCache && (
                 <Chip
@@ -277,6 +312,7 @@ const Vulnerabilities: React.FC = () => {
               vulnerabilities={vulnerabilities}
               onRowClick={handleRowClick}
               dataProcessor={dataProcessor}
+              onSelectionChange={handleSelectionChange}
             />
           </Box>
         ) : (
@@ -296,6 +332,13 @@ const Vulnerabilities: React.FC = () => {
           vulnerability={selectedVulnerability}
           open={detailModalOpen}
           onClose={handleCloseModal}
+        />
+        
+        {/* Vulnerability comparator modal */}
+        <VulnerabilityComparator
+          vulnerabilities={selectedVulnerabilities}
+          open={comparatorOpen}
+          onClose={handleCloseComparator}
         />
       </Container>
     </Layout>
