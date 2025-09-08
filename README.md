@@ -64,7 +64,7 @@ yarn dev
 Navigate to `http://localhost:5176` to view the application locally.
 
 ### 5. Live Demo
-🌐 **Live Application**: [https://kai-assessment-76a4sekhv-poojitha-miryalas-projects.vercel.app/vulnerabilities](https://kai-assessment-76a4sekhv-poojitha-miryalas-projects.vercel.app/vulnerabilities)
+🌐 **Live Application**: [https://kai-assessment-fjbegiece-poojitha-miryalas-projects.vercel.app/](https://kai-assessment-fjbegiece-poojitha-miryalas-projects.vercel.app/)
 
 ### 6. Data Source
 The application fetches vulnerability data from an external API endpoint that provides comprehensive vulnerability information including CVE details, severity levels, risk factors, and remediation status.
