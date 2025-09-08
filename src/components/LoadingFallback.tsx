@@ -5,6 +5,9 @@ interface LoadingFallbackProps {
   message?: string;
 }
 
+/**
+ * Reusable loading component for React.Suspense fallbacks
+ */
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ 
   message = 'Loading...' 
 }) => {

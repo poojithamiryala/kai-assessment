@@ -45,18 +45,13 @@ const RiskFactorsChart: React.FC<RiskFactorsChartProps> = memo(({
   // Preparing data for risk factors chart - using real vulnerability data
   const chartData = useMemo(() => {
     if (!metrics.riskFactorDistribution || Object.keys(metrics.riskFactorDistribution).length === 0) {
-      console.log('No risk factor distribution data available');
       return [];
     }
-    
-    console.log('Risk factor distribution:', metrics.riskFactorDistribution);
     
     let data = Object.entries(metrics.riskFactorDistribution).map(([riskFactor, count]) => ({
       name: riskFactor,
       count,
     }));
-
-    console.log('Processing chart data:', data);
 
     // Apply risk factor filter
     if (filters?.riskFactors && filters.riskFactors.length > 0) {

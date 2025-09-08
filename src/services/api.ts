@@ -10,7 +10,6 @@ export const fetchVulnerabilityDataProcessor = async (
   onProgress?: (progress: number) => void
 ): Promise<OptimizedVulnerabilityApiResponse> => {
   try {
-    console.log('Starting optimized data fetch...');
 
     const response = await fetch('/ui_demo.json'); // using fetch instead of axios as it is more efficient for large files as response.body is a readable stream
     if (!response.ok) {
@@ -44,14 +43,10 @@ export const fetchVulnerabilityDataProcessor = async (
       }
     }
 
-    console.log('Download completed, parsing JSON...');
-
     // Parsing JSON
     // TODO have to check if this is the best way to parse the JSON to avoid memory issues 
     // TODO also check if there is any other way instead of loading the entire file into memory
     const rawData: VulnerabilityData = JSON.parse(buffer);
-
-    console.log('JSON parsed, processing data...');
 
     // Creating processor and processing data
     const processor = createVulnerabilityProcessor();
@@ -61,8 +56,6 @@ export const fetchVulnerabilityDataProcessor = async (
         onProgress(70 + Math.round(progress * 0.3));
       }
     });
-
-    console.log('Optimized processing completed!');
 
     // Get metrics and statistics
     const metrics = processor.getMetrics();

@@ -7,8 +7,14 @@ export interface ProcessingStats {
   memoryUsage: number;
 }
 
+/**
+ * High-performance data processor for large vulnerability datasets
+ * Uses indexing for O(1) lookups and asynchronous processing to prevent UI blocking
+ */
 export class EfficientDataProcessor {
   private vulnerabilities: OptimizedVulnerability[] = [];
+  
+  // Indexes for fast searching and filtering
   private searchIndex: Map<string, Set<number>> = new Map();
   private severityIndex: Map<string, Set<number>> = new Map();
   private packageIndex: Map<string, Set<number>> = new Map();
@@ -17,14 +23,39 @@ export class EfficientDataProcessor {
 
   constructor(vulnerabilities: OptimizedVulnerability[]) {
     this.vulnerabilities = vulnerabilities;
-    this.buildIndexes();
+    this.buildIndexesAsync();
   }
 
+  // Defer heavy indexing work to prevent UI blocking
+  private async buildIndexesAsync(): Promise<void> {
+    if (window.requestIdleCallback) {
+      await new Promise(resolve => {
+        window.requestIdleCallback(() => {
+          this.buildIndexes();
+          resolve(undefined);
+        });
+      });
+    } else {
+      await new Promise(resolve => {
+        setTimeout(() => {
+          this.buildIndexes();
+          resolve(undefined);
+        }, 0);
+      });
+    }
+  }
+
+  // Core optimization: build lookup tables for O(1) searching
   private buildIndexes(): void {
-    console.time('Building indexes');
-    
+    // Pre-allocate Maps for better performance
+    const searchIndex = new Map<string, Set<number>>();
+    const severityIndex = new Map<string, Set<number>>();
+    const packageIndex = new Map<string, Set<number>>();
+    const repoIndex = new Map<string, Set<number>>();
+    const kaiStatusIndex = new Map<string, Set<number>>();
+
     this.vulnerabilities.forEach((vuln, index) => {
-      // Search indexes (for CVE, imageName, repoName, description)
+      // Build comprehensive search index from multiple fields
       const searchTerms = [
         vuln.cve.toLowerCase(),
         vuln.imageName.toLowerCase(),
@@ -32,50 +63,50 @@ export class EfficientDataProcessor {
         vuln.description.toLowerCase()
       ].join(' ');
 
+      // Index each word for partial matching
       searchTerms.split(' ').forEach(term => {
-        if (term.length > 0) { // Index all non-empty terms
-          if (!this.searchIndex.has(term)) {
-            this.searchIndex.set(term, new Set());
+        if (term.length > 0) {
+          if (!searchIndex.has(term)) {
+            searchIndex.set(term, new Set());
           }
-          this.searchIndex.get(term)!.add(index);
+          searchIndex.get(term)!.add(index);
         }
       });
 
-      // Severity index
-      if (!this.severityIndex.has(vuln.severity)) {
-        this.severityIndex.set(vuln.severity, new Set());
+      // Build filter indexes
+      if (!severityIndex.has(vuln.severity)) {
+        severityIndex.set(vuln.severity, new Set());
       }
-      this.severityIndex.get(vuln.severity)!.add(index);
+      severityIndex.get(vuln.severity)!.add(index);
 
-      // Package index
-      if (!this.packageIndex.has(vuln.imageName)) {
-        this.packageIndex.set(vuln.imageName, new Set());
+      if (!packageIndex.has(vuln.imageName)) {
+        packageIndex.set(vuln.imageName, new Set());
       }
-      this.packageIndex.get(vuln.imageName)!.add(index);
+      packageIndex.get(vuln.imageName)!.add(index);
 
-      // Repo index
-      if (!this.repoIndex.has(vuln.repoName)) {
-        this.repoIndex.set(vuln.repoName, new Set());
+      if (!repoIndex.has(vuln.repoName)) {
+        repoIndex.set(vuln.repoName, new Set());
       }
-      this.repoIndex.get(vuln.repoName)!.add(index);
+      repoIndex.get(vuln.repoName)!.add(index);
 
-      // Kai status index
-      if (!this.kaiStatusIndex.has(vuln.kaiStatus)) {
-        this.kaiStatusIndex.set(vuln.kaiStatus, new Set());
+      if (!kaiStatusIndex.has(vuln.kaiStatus)) {
+        kaiStatusIndex.set(vuln.kaiStatus, new Set());
       }
-      this.kaiStatusIndex.get(vuln.kaiStatus)!.add(index);
+      kaiStatusIndex.get(vuln.kaiStatus)!.add(index);
     });
 
-    console.timeEnd('Building indexes');
-    console.log('Indexes built:', {
-      searchTerms: this.searchIndex.size,
-      severities: this.severityIndex.size,
-      packages: this.packageIndex.size,
-      repos: this.repoIndex.size,
-      kaiStatuses: this.kaiStatusIndex.size
-    });
+    // Assign all indexes at once for better performance
+    this.searchIndex = searchIndex;
+    this.severityIndex = severityIndex;
+    this.packageIndex = packageIndex;
+    this.repoIndex = repoIndex;
+    this.kaiStatusIndex = kaiStatusIndex;
   }
 
+  /**
+   * Main search method with multi-word support and filter intersection
+   * Uses pre-built indexes for O(1) lookups and handles complex search scenarios
+   */
   public search(
     searchTerm: string = '',
     severityFilter: string = '',
@@ -89,26 +120,25 @@ export class EfficientDataProcessor {
     totalCount: number;
     stats: ProcessingStats;
   } {
-    console.time('Search operation');
     const startTime = performance.now();
-
     let resultIndices: Set<number> | null = null;
 
-    // Apply search filter using index
+    // Handle search term with exact match and multi-word intersection
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       
-      // Try exact term matching first
+      // Try exact term matching first (fastest)
       let exactMatchIndices = this.searchIndex.get(searchLower);
       
       if (exactMatchIndices && exactMatchIndices.size > 0) {
         resultIndices = new Set(exactMatchIndices);
       } else {
-        // If no exact match, try splitting into words and finding intersection
+        // Multi-word search: find intersection of all terms
         const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
         if (searchTerms.length > 1) {
           resultIndices = new Set();
           
+          // Intersect results from each word - ALL words must be present
           searchTerms.forEach((term, i) => {
             const termIndices = this.searchIndex.get(term) || new Set();
             if (i === 0) {
@@ -117,11 +147,14 @@ export class EfficientDataProcessor {
               resultIndices = new Set([...resultIndices!].filter(index => termIndices.has(index)));
             }
           });
+        } else {
+          // Single word search with no matches - return empty results
+          resultIndices = new Set();
         }
       }
     }
 
-    // Apply other filters using indexes
+    // Apply filters using indexes (intersect with search results)
     const filters = [
       { filter: severityFilter, index: this.severityIndex },
       { filter: packageFilter, index: this.packageIndex },
@@ -140,23 +173,19 @@ export class EfficientDataProcessor {
       }
     });
 
-    // If no filters applied, use all indices
+    // Handle case where no search or filters applied
     if (resultIndices === null) {
       resultIndices = new Set(this.vulnerabilities.map((_, index) => index));
     }
 
-    // Convert indices to actual vulnerabilities
+    // Convert indices to vulnerabilities and apply pagination
     const filteredVulnerabilities = [...resultIndices].map(index => this.vulnerabilities[index]);
-
-    // Apply pagination
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
     const paginatedResults = filteredVulnerabilities.slice(startIndex, endIndex);
 
     const endTime = performance.now();
     const processingTime = endTime - startTime;
-
-    console.timeEnd('Search operation');
 
     return {
       results: paginatedResults,
@@ -170,6 +199,7 @@ export class EfficientDataProcessor {
     };
   }
 
+  // Extract unique values from indexes for filter dropdowns
   public getUniqueValues(): {
     severities: string[];
     packages: string[];
@@ -184,11 +214,11 @@ export class EfficientDataProcessor {
     };
   }
 
+  // Rough memory usage estimation
   private getMemoryUsage(): number {
-    // Rough estimation of memory usage
     const indexSize = this.searchIndex.size + this.severityIndex.size + 
                      this.packageIndex.size + this.repoIndex.size + this.kaiStatusIndex.size;
-    return indexSize * 8; // Rough bytes estimation
+    return indexSize * 8;
   }
 
 }

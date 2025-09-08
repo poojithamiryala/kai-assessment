@@ -21,6 +21,7 @@ import Layout from '../components/Layout';
 import SeverityChart from '../components/SeverityChart';
 import KaiStatusChart from '../components/KaiStatusChart';
 import { useVulnerabilityData } from '../hooks/useVulnerabilityData';
+import { vulnerabilityCache } from '../services/vulnerabilityCache';
 import RiskFactorsChart from '../components/RiskFactorsChart';
 import DiscoveryTrendChart from '../components/DiscoveryTrendChart';
 import FixTrendChart from '../components/FixTrendChart';
@@ -34,15 +35,22 @@ const Home: React.FC = () => {
   const filteredMetrics = useMemo(() => {
     if (!data?.processor) return null;
 
+    let metrics;
     switch (activeFilter) {
       case 'analysis':
-        return data.processor.getAnalysisFilteredMetrics();
+        metrics = data.processor.getAnalysisFilteredMetrics();
+        break;
       case 'ai-analysis':
-        return data.processor.getAiAnalysisFilteredMetrics();
+        metrics = data.processor.getAiAnalysisFilteredMetrics();
+        break;
       default:
-        return data.metrics;
+        metrics = data.metrics;
     }
+    
+    return metrics;
   }, [data?.processor, data?.metrics, activeFilter]);
+
+ 
 
   return (
     <Layout>
@@ -76,9 +84,24 @@ const Home: React.FC = () => {
           <>
             {/* Filter Buttons */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                Vulnerability Analysis Tools
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
+                  Vulnerability Analysis Tools
+                </Typography>
+                
+                {/* Cache Status */}
+                {(() => {
+                  const cacheInfo = vulnerabilityCache.getCacheInfo();
+                  return cacheInfo.hasCache ? (
+                    <Chip
+                      label={`Cached: ${cacheInfo.size.toLocaleString()} items`}
+                      color={cacheInfo.isValid ? 'success' : 'warning'}
+                      size="small"
+                      sx={{ borderRadius: '8px' }}
+                    />
+                  ) : null;
+                })()}
+              </Box>
 
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
                 <Button
