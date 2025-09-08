@@ -20,6 +20,9 @@ export class EfficientDataProcessor {
   private packageIndex: Map<string, Set<number>> = new Map();
   private repoIndex: Map<string, Set<number>> = new Map();
   private kaiStatusIndex: Map<string, Set<number>> = new Map();
+  
+  // Pre-sorted ID arrays for different sort fields - amortized sorting cost
+  private preSortedIds: Map<string, number[]> = new Map();
 
   constructor(vulnerabilities: OptimizedVulnerability[]) {
     this.vulnerabilities = vulnerabilities;
@@ -101,11 +104,86 @@ export class EfficientDataProcessor {
     this.packageIndex = packageIndex;
     this.repoIndex = repoIndex;
     this.kaiStatusIndex = kaiStatusIndex;
+    
+    // Build pre-sorted arrays for amortized sorting cost
+    this.buildPreSortedArrays();
   }
 
   /**
-   * Main search method with multi-word support and filter intersection
-   * Uses pre-built indexes for O(1) lookups and handles complex search scenarios
+   * Build pre-sorted arrays for different sort fields
+   * This amortizes the sorting cost - sort once, reuse many times
+   */
+  private buildPreSortedArrays(): void {
+    const allIndices = this.vulnerabilities.map((_, index) => index);
+    
+    // Pre-sort by published date (desc) - most common sort
+    this.preSortedIds.set('published-desc', [...allIndices].sort((a, b) => {
+      const dateA = new Date(this.vulnerabilities[a].published || '').getTime();
+      const dateB = new Date(this.vulnerabilities[b].published || '').getTime();
+      return dateB - dateA; // Descending
+    }));
+    
+    // Pre-sort by published date (asc)
+    this.preSortedIds.set('published-asc', [...allIndices].sort((a, b) => {
+      const dateA = new Date(this.vulnerabilities[a].published || '').getTime();
+      const dateB = new Date(this.vulnerabilities[b].published || '').getTime();
+      return dateA - dateB; // Ascending
+    }));
+    
+    // Pre-sort by CVE (asc)
+    this.preSortedIds.set('cve-asc', [...allIndices].sort((a, b) => {
+      return this.vulnerabilities[a].cve.localeCompare(this.vulnerabilities[b].cve);
+    }));
+    
+    // Pre-sort by CVE (desc)
+    this.preSortedIds.set('cve-desc', [...allIndices].sort((a, b) => {
+      return this.vulnerabilities[b].cve.localeCompare(this.vulnerabilities[a].cve);
+    }));
+    
+    // Pre-sort by severity (desc) - critical > high > medium > low
+    this.preSortedIds.set('severity-desc', [...allIndices].sort((a, b) => {
+      const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+      const orderA = severityOrder[this.vulnerabilities[a].severity as keyof typeof severityOrder] || 0;
+      const orderB = severityOrder[this.vulnerabilities[b].severity as keyof typeof severityOrder] || 0;
+      return orderB - orderA; // Descending
+    }));
+    
+    // Pre-sort by severity (asc)
+    this.preSortedIds.set('severity-asc', [...allIndices].sort((a, b) => {
+      const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+      const orderA = severityOrder[this.vulnerabilities[a].severity as keyof typeof severityOrder] || 0;
+      const orderB = severityOrder[this.vulnerabilities[b].severity as keyof typeof severityOrder] || 0;
+      return orderA - orderB; // Ascending
+    }));
+    
+    // Pre-sort by fix date (desc)
+    this.preSortedIds.set('fixDate-desc', [...allIndices].sort((a, b) => {
+      const dateA = new Date(this.vulnerabilities[a].fixDate || '').getTime();
+      const dateB = new Date(this.vulnerabilities[b].fixDate || '').getTime();
+      return dateB - dateA; // Descending
+    }));
+    
+    // Pre-sort by fix date (asc)
+    this.preSortedIds.set('fixDate-asc', [...allIndices].sort((a, b) => {
+      const dateA = new Date(this.vulnerabilities[a].fixDate || '').getTime();
+      const dateB = new Date(this.vulnerabilities[b].fixDate || '').getTime();
+      return dateA - dateB; // Ascending
+    }));
+    
+    // Pre-sort by Kai status (asc)
+    this.preSortedIds.set('kaiStatus-asc', [...allIndices].sort((a, b) => {
+      return this.vulnerabilities[a].kaiStatus.localeCompare(this.vulnerabilities[b].kaiStatus);
+    }));
+    
+    // Pre-sort by Kai status (desc)
+    this.preSortedIds.set('kaiStatus-desc', [...allIndices].sort((a, b) => {
+      return this.vulnerabilities[b].kaiStatus.localeCompare(this.vulnerabilities[a].kaiStatus);
+    }));
+  }
+
+  /**
+   * Main search method using pre-sorted arrays and fast filtering
+   * Amortized sorting cost - sort once, reuse many times
    */
   public search(
     searchTerm: string = '',
@@ -114,89 +192,198 @@ export class EfficientDataProcessor {
     repoFilter: string = '',
     kaiStatusFilter: string = '',
     page: number = 0,
-    pageSize: number = 50
+    pageSize: number = 50,
+    sortField: string = 'published',
+    sortDirection: 'asc' | 'desc' = 'desc'
   ): {
     results: OptimizedVulnerability[];
     totalCount: number;
     stats: ProcessingStats;
   } {
     const startTime = performance.now();
-    let resultIndices: Set<number> | null = null;
-
-    // Handle search term with exact match and multi-word intersection
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    
+    // Get the pre-sorted array for the requested sort field and direction
+    const sortKey = `${sortField}-${sortDirection}`;
+    const preSortedIds = this.preSortedIds.get(sortKey);
+    
+    if (!preSortedIds) {
+      // Fallback to default sorting if pre-sorted array not found
+      const allIndices = this.vulnerabilities.map((_, index) => index);
+      const sortedIndices = this.sortVulnerabilities(
+        allIndices.map(index => this.vulnerabilities[index]), 
+        sortField, 
+        sortDirection
+      ).map((_, index) => allIndices[index]);
       
-      // Try exact term matching first (fastest)
-      let exactMatchIndices = this.searchIndex.get(searchLower);
-      
-      if (exactMatchIndices && exactMatchIndices.size > 0) {
-        resultIndices = new Set(exactMatchIndices);
-      } else {
-        // Multi-word search: find intersection of all terms
-        const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
-        if (searchTerms.length > 1) {
-          resultIndices = new Set();
-          
-          // Intersect results from each word - ALL words must be present
-          searchTerms.forEach((term, i) => {
-            const termIndices = this.searchIndex.get(term) || new Set();
-            if (i === 0) {
-              resultIndices = new Set(termIndices);
-            } else {
-              resultIndices = new Set([...resultIndices!].filter(index => termIndices.has(index)));
-            }
-          });
-        } else {
-          // Single word search with no matches - return empty results
-          resultIndices = new Set();
-        }
-      }
+      return this.filterAndPaginate(sortedIndices, searchTerm, severityFilter, packageFilter, repoFilter, kaiStatusFilter, page, pageSize, startTime);
     }
-
-    // Apply filters using indexes (intersect with search results)
-    const filters = [
-      { filter: severityFilter, index: this.severityIndex },
-      { filter: packageFilter, index: this.packageIndex },
-      { filter: repoFilter, index: this.repoIndex },
-      { filter: kaiStatusFilter, index: this.kaiStatusIndex }
-    ];
-
-    filters.forEach(({ filter, index }) => {
-      if (filter) {
-        const filterIndices = index.get(filter) || new Set();
-        if (resultIndices === null) {
-          resultIndices = new Set(filterIndices);
-        } else {
-          resultIndices = new Set([...resultIndices].filter(index => filterIndices.has(index)));
-        }
-      }
-    });
-
-    // Handle case where no search or filters applied
-    if (resultIndices === null) {
-      resultIndices = new Set(this.vulnerabilities.map((_, index) => index));
-    }
-
-    // Convert indices to vulnerabilities and apply pagination
-    const filteredVulnerabilities = [...resultIndices].map(index => this.vulnerabilities[index]);
+    
+    // Fast scan: filter the pre-sorted array
+    const visibleIds = preSortedIds.filter(id => this.passesFilters(id, searchTerm, severityFilter, packageFilter, repoFilter, kaiStatusFilter));
+    
+    // Apply pagination to filtered results
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedResults = filteredVulnerabilities.slice(startIndex, endIndex);
-
+    const paginatedIds = visibleIds.slice(startIndex, endIndex);
+    
+    // Convert IDs back to vulnerability objects
+    const results = paginatedIds.map(id => this.vulnerabilities[id]);
+    
     const endTime = performance.now();
     const processingTime = endTime - startTime;
-
+    
     return {
-      results: paginatedResults,
-      totalCount: filteredVulnerabilities.length,
+      results,
+      totalCount: visibleIds.length,
       stats: {
         totalCount: this.vulnerabilities.length,
-        filteredCount: filteredVulnerabilities.length,
+        filteredCount: visibleIds.length,
         processingTime,
         memoryUsage: this.getMemoryUsage()
       }
     };
+  }
+
+  /**
+   * Fast filter check for a single vulnerability ID
+   * Uses pre-built indexes for O(1) lookups
+   */
+  private passesFilters(
+    id: number,
+    searchTerm: string,
+    severityFilter: string,
+    packageFilter: string,
+    repoFilter: string,
+    kaiStatusFilter: string
+  ): boolean {
+    // Check search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const searchTerms = searchLower.split(' ').filter(term => term.length > 0);
+      
+      if (searchTerms.length === 1) {
+        // Single word search - check if it exists in search index
+        const termIndices = this.searchIndex.get(searchTerms[0]);
+        if (!termIndices || !termIndices.has(id)) {
+          return false;
+        }
+      } else {
+        // Multi-word search - ALL words must be present
+        for (const term of searchTerms) {
+          const termIndices = this.searchIndex.get(term);
+          if (!termIndices || !termIndices.has(id)) {
+            return false;
+          }
+        }
+      }
+    }
+    
+    // Check filters using indexes
+    if (severityFilter && !this.severityIndex.get(severityFilter)?.has(id)) {
+      return false;
+    }
+    if (packageFilter && !this.packageIndex.get(packageFilter)?.has(id)) {
+      return false;
+    }
+    if (repoFilter && !this.repoIndex.get(repoFilter)?.has(id)) {
+      return false;
+    }
+    if (kaiStatusFilter && !this.kaiStatusIndex.get(kaiStatusFilter)?.has(id)) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Helper method for fallback filtering and pagination
+   */
+  private filterAndPaginate(
+    sortedIndices: number[],
+    searchTerm: string,
+    severityFilter: string,
+    packageFilter: string,
+    repoFilter: string,
+    kaiStatusFilter: string,
+    page: number,
+    pageSize: number,
+    startTime: number
+  ): {
+    results: OptimizedVulnerability[];
+    totalCount: number;
+    stats: ProcessingStats;
+  } {
+    // Filter the sorted indices
+    const visibleIds = sortedIndices.filter(id => 
+      this.passesFilters(id, searchTerm, severityFilter, packageFilter, repoFilter, kaiStatusFilter)
+    );
+    
+    // Apply pagination
+    const startIndex = page * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedIds = visibleIds.slice(startIndex, endIndex);
+    
+    // Convert to vulnerability objects
+    const results = paginatedIds.map(id => this.vulnerabilities[id]);
+    
+    const endTime = performance.now();
+    const processingTime = endTime - startTime;
+    
+    return {
+      results,
+      totalCount: visibleIds.length,
+      stats: {
+        totalCount: this.vulnerabilities.length,
+        filteredCount: visibleIds.length,
+        processingTime,
+        memoryUsage: this.getMemoryUsage()
+      }
+    };
+  }
+
+  /**
+   * Efficient sorting method for vulnerability data
+   * Handles different field types with optimized comparison functions
+   */
+  private sortVulnerabilities(
+    vulnerabilities: OptimizedVulnerability[], 
+    sortField: string, 
+    sortDirection: 'asc' | 'desc'
+  ): OptimizedVulnerability[] {
+    return [...vulnerabilities].sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortField) {
+        case 'cve':
+          aValue = a.cve;
+          bValue = b.cve;
+          break;
+        case 'severity':
+          // Sort by severity priority (critical > high > medium > low)
+          const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+          aValue = severityOrder[a.severity as keyof typeof severityOrder] || 0;
+          bValue = severityOrder[b.severity as keyof typeof severityOrder] || 0;
+          break;
+        case 'published':
+          aValue = new Date(a.published || '').getTime();
+          bValue = new Date(b.published || '').getTime();
+          break;
+        case 'fixDate':
+          aValue = new Date(a.fixDate || '').getTime();
+          bValue = new Date(b.fixDate || '').getTime();
+          break;
+        case 'kaiStatus':
+          aValue = a.kaiStatus;
+          bValue = b.kaiStatus;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
   // Extract unique values from indexes for filter dropdowns
